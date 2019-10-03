@@ -109,3 +109,4 @@ venv.bak/
 *.ipynb
 *.log
 notebooks/
+*.DS_Store
