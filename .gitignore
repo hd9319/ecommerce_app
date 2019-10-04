@@ -110,3 +110,5 @@ venv.bak/
 *.log
 notebooks/
 *.DS_Store
+*.json
+data/

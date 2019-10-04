@@ -9,33 +9,7 @@ import numpy as np
 import pandas as pd
 import pyodbc
 
-# globals
-date_string = datetime.now().strftime('%m_%d_%Y')
-data_directory = 'data/%s' % date_string
-
-# create logger
-logger = configure_logging(path_to_log_directory='logs/')
-
-if not os.path.isdir(data_directory):
-    logger.error('type="directory" | message="Invalid Directory"' % data_directory)
-    raise Exception('Error: Invalid File Directory')
-
-try:
-    DRIVER = os.environ['PDB_DRIVER']
-    HOST = os.environ['PDB_HOST']
-    DATABASE = os.environ['PDB_DATABASE']
-    TABLE_NAME = os.environ['PDB_PRODUCT_TABLE']
-    USERNAME = os.environ['PDB_USERNAME']
-    PASSWORD = os.environ['PDB_PASSWORD']
-except KeyError as e:
-    logger.error('type="ENV_VARIABLE" | message="Failed to get %s"' % e)
-    raise Exception(e)
-
-connection_string = 'DRIVER={%s};SERVER=%s;DATABASE=%s;UID=%s;PWD=%s' % (DRIVER, HOST, DATABASE, USERNAME, PASSWORD)
-
-# establish connection
-conn = pyodbc.connect(connection_string)
-    
+from bb_sql import *
 
 def configure_logging(path_to_log_directory, log_level='WARNING'):
     """
@@ -201,41 +175,11 @@ def load(data, database, table, column_map):
     table_columns = ['[%s]' % column[1] for column in column_map]
     column_placeholders = ['?' for _ in table_columns]
     
-    # sql
-    create_table_sql = """
-    CREATE TABLE [%s].dbo.[%s] (
-        Brand varchar(255),
-        PartNumber varchar(255),
-        Category varchar(255),
-        ImageUrl varchar(255),
-        RegularPrice float,
-        SalePrice float,
-        Description varchar(255),
-        CustomerRating float,
-        CustomerRatingCount int,
-        CustomerReviewCount int,
-        SourceUrl varchar(255),
-        CreatedOn datetime
-    );
-    """ % (database, table)
-    
-    truncate_sql = """
-    TRUNCATE TABLE [%s].dbo.[%s];
-    """ % (database, table)
-    
-    
-    insert_sql = """
-    INSERT INTO [%s].dbo.[%s] (%s)
-    VALUES (%s)
-    """ % (database, table,
-          ', '.join(table_columns),
-          ','.join(column_placeholders),
-          )
-
     # truncate
     try:
-        print(truncate_sql)
-        cursor.execute(truncate_sql)
+        TRUNCATE_SQL = TRUNCATE_SQL % DATABASE
+        print(TRUNCATE_SQL)
+        cursor.execute(TRUNCATE_SQL)
     except pyodbc.ProgrammingError as e:
         logger.error('type="sql" | message="Unable to find table %s.dbo.%s"' % (database, table))
         raise Exception('Unable to find table %s.dbo.%s' % (database, table))
@@ -243,8 +187,12 @@ def load(data, database, table, column_map):
     # insert
     try:
         insert_params = [tuple([row[column] for column in data_columns]) for _, row in data.to_dict(orient='index').items()]
-        print(insert_sql)
-        cursor.executemany(insert_sql, insert_params)
+        INSERT_SQL = INSERT_SQL % (database, table,
+                                  ', '.join(table_columns),
+                                  ','.join(column_placeholders),
+                                  )
+        print(INSERT_SQL)
+        cursor.executemany(INSERT_SQL, insert_params)
     except pyodbc.ProgrammingError as e:
         logger.error('type="sql" | message="Unable to import data into %s.dbo.%s"' % (database, table))
         raise Exception('Unable to import data into %s.dbo.%s' % (database, table))
@@ -309,3 +257,31 @@ if __name__ == '__main__':
     
     print('Time Elapsed: %s seconds.' % end_time - start_time)
 
+
+# globals
+date_string = datetime.now().strftime('%m_%d_%Y')
+data_directory = 'data/%s' % date_string
+
+# create logger
+logger = configure_logging(path_to_log_directory='logs/')
+
+if not os.path.isdir(data_directory):
+    logger.error('type="directory" | message="Invalid Directory"' % data_directory)
+    raise Exception('Error: Invalid File Directory')
+
+try:
+    DRIVER = os.environ['PDB_DRIVER']
+    HOST = os.environ['PDB_HOST']
+    DATABASE = os.environ['PDB_DATABASE']
+    TABLE_NAME = os.environ['PDB_PRODUCT_TABLE']
+    USERNAME = os.environ['PDB_USERNAME']
+    PASSWORD = os.environ['PDB_PASSWORD']
+except KeyError as e:
+    logger.error('type="ENV_VARIABLE" | message="Failed to get %s"' % e)
+    raise Exception(e)
+
+connection_string = 'DRIVER={%s};SERVER=%s;DATABASE=%s;UID=%s;PWD=%s' % (DRIVER, HOST, DATABASE, USERNAME, PASSWORD)
+
+# establish connection
+conn = pyodbc.connect(connection_string)
+    

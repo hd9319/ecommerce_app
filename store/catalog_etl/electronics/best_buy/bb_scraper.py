@@ -15,41 +15,6 @@ from threading import Thread
 import requests
 from bs4 import BeautifulSoup
 
-# date prefix
-date_string = datetime.now().strftime('%m_%d_%Y')
-
-# define urls
-domain = 'https://www.bestbuy.ca'
-home_page = 'https://www.bestbuy.ca/en-ca'
-api_page = 'https://www.bestbuy.ca/api/v2/json/search'
-
-# data scrapes directory
-data_directory = 'data/%s' % date_string
-
-# seconds between requests
-request_delay = 1
-
-# allowable requests
-acceptable_status_codes = [200]
-
-# request headers
-base_headers = {
-    'accept-encoding': 'gzip, deflate, br',
-    'accept-language': 'en-US,en;q=0.9',
-    'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
-    'accept': '*/*',
-    'referer': 'https://www.google.ca/',
-    'authority': 'www.bestbuy.ca',
-}
-
-# create folder if it does not exist
-if not os.path.isdir(data_directory):
-    os.mkdir(data_directory)
-    
-# create logger
-logger = configure_logging(path_to_log_directory='logs/')
-
-
 def configure_logging(path_to_log_directory, log_level='WARNING'):
     """
     Creates a file logger using a date prefix name.
@@ -263,6 +228,40 @@ def download_all_products(brand_subset=None, threads=1):
     for brand, brand_page in brand_reference.items():
         get_products_via_api(brand=brand, init_url=brand_page)        
 
+
+# date prefix
+date_string = datetime.now().strftime('%m_%d_%Y')
+
+# define urls
+domain = 'https://www.bestbuy.ca'
+home_page = 'https://www.bestbuy.ca/en-ca'
+api_page = 'https://www.bestbuy.ca/api/v2/json/search'
+
+# data scrapes directory
+data_directory = 'data/%s' % date_string
+
+# seconds between requests
+request_delay = 1
+
+# allowable requests
+acceptable_status_codes = [200]
+
+# request headers
+base_headers = {
+    'accept-encoding': 'gzip, deflate, br',
+    'accept-language': 'en-US,en;q=0.9',
+    'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
+    'accept': '*/*',
+    'referer': 'https://www.google.ca/',
+    'authority': 'www.bestbuy.ca',
+}
+
+# create folder if it does not exist
+if not os.path.isdir(data_directory):
+    os.mkdir(data_directory)
+    
+# create logger
+logger = configure_logging(path_to_log_directory='logs/')
 
 if __name__ == '__main__':
     response = download_all_products()
